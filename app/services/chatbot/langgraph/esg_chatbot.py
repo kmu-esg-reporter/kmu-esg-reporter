@@ -51,6 +51,7 @@ class ESGReportChatbot:
         self.data_processor = ESGDataProcessor(db)
         self.max_iterations = 3
         api_key = settings.openai.OPENAI_API_KEY if settings.openai else None
+        self._last_outcomes: Dict[str, dict] = {}  # session_id -> outcome dict
         
         # OpenAI LLM 설정
         self.llm = ChatOpenAI(
@@ -236,15 +237,7 @@ class ESGReportChatbot:
     def _analyze_intent(self, state: ESGAgentState) -> ESGAgentState:
         """사용자 의도 분석 - UI 컨텍스트 포함"""
         query = state.get("query", "").lower()
-        
-        # UI에서 전달된 컨텍스트 파싱
-        ui_context = None
-        if "[UI 설정:" in query:
-            try:
-                context_part = query.split("[UI 설정:")[1].split("]")[0]
-                ui_context = eval(context_part)  # 실제로는 json.loads 사용 권장
-            except:
-                ui_context = None
+        ui_context = state.get("ui_context") or {}
         
         # UI에서 선택된 intent가 있으면 우선 사용
         if ui_context and ui_context.get("selected_intent"):
@@ -327,7 +320,7 @@ class ESGReportChatbot:
         """데이터 가용성에 따른 분기"""
         return "no_data" if state.get("needs_data_collection", True) else "has_data"
     
-    def _execute_esg_tools(self, state: ESGAgentState) -> ESGAgentState:
+    async def _execute_esg_tools(self, state: ESGAgentState) -> ESGAgentState:
         """ESG 도구 실행 - UI 컨텍스트 반영"""
         intent = state.get("intent", "")
         cmp_num = state.get("cmp_num")
@@ -338,6 +331,7 @@ class ESGReportChatbot:
         selected_period = ui_context.get("selected_period", "current_year")
         
         tool_results = {}
+        logger.info(f"분석된 의도: {intent}, 선택된 카테고리: {selected_category}, 선택된 기간: {selected_period}")
         
         try:
             if intent == "data_query":
@@ -361,7 +355,7 @@ class ESGReportChatbot:
             elif intent == "report_generation":
                 # 보고서 생성 도구 실행
                 report_type = "comprehensive" if selected_category == "all" else "category_specific"
-                result = self.tools[3].invoke({"cmp_num": cmp_num, "report_type": report_type})
+                result = await self.tools[3].ainvoke({"cmp_num": cmp_num, "report_type": report_type})
                 tool_results["generated_report"] = result
                 tool_results["report_category"] = selected_category
                 tool_results["report_period"] = selected_period
@@ -518,6 +512,7 @@ ESG 분석과 보고서 생성을 위해 먼저 회사를 선택해 주세요.
             
             # 워크플로우 실행
             complete_response = ""
+            last_tool_results, last_report_generated = {}, False
             async for chunk in self.agent_workflow.astream(initial_state, stream_mode="values"):
                 if "response_content" in chunk and chunk["response_content"]:
                     current_content = chunk["response_content"]
@@ -529,7 +524,31 @@ ESG 분석과 보고서 생성을 위해 먼저 회사를 선택해 주세요.
                         for char in new_tokens:
                             yield char
                             await asyncio.sleep(0.01)
+                
+                if "tool_results" in chunk:
+                    last_tool_results = chunk["tool_results"] or last_tool_results
+                if "report_generated" in chunk:
+                    last_report_generated = bool(chunk["report_generated"])
             
+            report_id = None
+            try:
+                # 도구가 JSON 문자열을 반환했다면 파싱
+                gen = last_tool_results.get("generated_report")
+                if isinstance(gen, str):
+                    parsed = json.loads(gen)
+                    report_id = parsed.get("report_id")
+                elif isinstance(gen, dict):
+                    report_id = gen.get("report_id")
+            except Exception:
+                pass
+
+            self._last_outcomes[session_id] = {
+                "report_generated": last_report_generated or bool(report_id),
+                "report_id": report_id,
+                "tool_results": last_tool_results,
+                "full_text": complete_response,
+            }
+
             if not complete_response.strip():
                 complete_response = "죄송합니다. 응답을 생성할 수 없습니다."
                 for char in complete_response:
@@ -541,6 +560,10 @@ ESG 분석과 보고서 생성을 위해 먼저 회사를 선택해 주세요.
             for char in error_message:
                 yield char
                 await asyncio.sleep(0.01)
+
+    def get_last_outcome(self, session_id: str) -> Dict[str, Any]:
+        """마지막 대화 결과 가져오기"""
+        return self._last_outcomes.get(session_id, {})
 
 # --- PDF Export Helpers -------------------------------------------------
 
