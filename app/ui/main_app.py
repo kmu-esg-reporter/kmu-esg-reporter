@@ -95,7 +95,7 @@ class ESGReporterApp:
             #             ui.menu_item('Logout', lambda: ui.notify('Logout clicked'))
         
         # Navigation drawer
-        with ui.left_drawer().classes('bg-blue-grey-1') as drawer:
+        with ui.left_drawer().classes('bg-blue-grey-1').props('width=220') as drawer:
             self._setup_navigation()
         
         # Main content area
