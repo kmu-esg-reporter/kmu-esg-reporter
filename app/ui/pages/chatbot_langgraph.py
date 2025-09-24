@@ -304,6 +304,7 @@ class ChatbotPage(BasePage):
         v = self._get_view()
         if not v or 'results' not in v:
             ui.notify('결과 영역을 찾을 수 없습니다.', color='negative'); return
+        
         session_id = self._get_session_id()
         results_area = v['results']
 
@@ -311,7 +312,7 @@ class ChatbotPage(BasePage):
         v.get('send_btn') and v['send_btn'].disable()
         chat_input.disable()
 
-        # 사용자 말풍선 출력
+        # 1) 사용자 말풍선
         with results_area:
             with ui.row().classes("w-full justify-end mb-2"):
                 with ui.row().classes("max-w-[75%] items-start gap-2"):
@@ -321,38 +322,16 @@ class ChatbotPage(BasePage):
                         .classes("text-body2 px-3 py-2 rounded-xl bg-primary text-white shadow")
                     ui.avatar(icon="person", color="grey-6")
 
-            # 어시스턴트 말풍선 컨테이너
-            with ui.row().classes("w-full items-start gap-2 mb-3"):
-                ui.avatar(icon="smart_toy", color="primary")
-                with ui.column().classes("max-w-[75%]"):
-                    ui.label("AI Assistant").classes("font-weight-bold text-xs text-gray-500")
-
-                    response_container = ui.column()
-
-        # 스트리밍 응답 (일반 텍스트 분기 로직 재사용)
-        with response_container:
-            pending_row = ui.row(align_items='center')
-            with pending_row:
-                ui.spinner(color='primary')
-                ui.label("응답을 생성하고 있습니다. 잠시만 기다려 주세요...").classes("text-body2")
-            response_label = self._bubble_label("").classes("text-body2")
-
-        full_response = ""
-        got_first_chunk = False
+        # 2) 어시스턴트 렌더 + 스트리밍 (자유 채팅은 intent_hint 없음)
         try:
-            async for chunk in self.chatbot.stream_response(text, session_id):
-                if not got_first_chunk:
-                    pending_row.delete()
-                    got_first_chunk = True
-                full_response += chunk
-                response_label.text = full_response
-                await asyncio.sleep(0.01)
-        except Exception as e:
-            try: pending_row.delete()
-            except: pass
-            response_label.text = f"스트리밍 중 오류가 발생했습니다: {e}"
+            await self._render_and_stream_assistant(
+                text=text,
+                session_id=session_id,
+                results_area=results_area,
+                ui_context={},           # 필요시 채팅창에서도 컨텍스트 전달 가능
+                intent_hint=None,        # 자유 채팅은 모델이 자체 판단
+            )
         finally:
-            # 입력창 리셋/활성화
             chat_input.value = ""
             chat_input.enable()
             v.get('send_btn') and v['send_btn'].enable()
@@ -386,67 +365,103 @@ class ChatbotPage(BasePage):
 
         return base_query
 
-    async def _stream_ai_response(self, query: str, context: dict) -> None:
-        """AI 응답을 스트리밍하고 보고서 생성을 처리합니다."""
+    async def _render_and_stream_assistant(
+        self,
+        text: str,
+        session_id: str,
+        results_area,
+        ui_context: dict | None = None,
+        intent_hint: str | None = None,
+    ) -> None:
+        ui_ctx = ui_context or {}
 
+        # 어시스턴트 블럭(아바타/제목/컨테이너)
+        response_container = self._assistant_block(results_area)
+
+        # 보고서 생성 의도면 바로 보고서 핸들링
+        if intent_hint == "report_generation":
+            with response_container:
+                pending_row, spinner, response_label = self._pending_bubble("보고서를 생성하고 있습니다. 잠시만 기다려 주세요...")
+            await self._handle_report_generation(text, response_container, ui_context or {})
+            try: spinner.delete()
+            except: pass
+            # 스크롤
+            try:
+                ui.element('div').style('height: 1px;').classes('scroll-anchor')
+                await ui.run_javascript("""
+                    const el = document.querySelector('.scroll-anchor');
+                    if (el) el.scrollIntoView({behavior: 'smooth', block: 'end'});
+                """)
+            except Exception:
+                pass
+            return  # ← 텍스트 스트리밍 없음
+
+        # 일반 스트리밍
+        with response_container:
+            pending_row, spinner, response_label = self._pending_bubble("응답을 생성하고 있습니다. 잠시만 기다려 주세요...")
+
+        full_response = ""
+        got_first_chunk = False
+        try:
+            # UI 컨텍스트를 모델로 넘기고 싶으면 여기서 넘김
+            async for chunk in self.chatbot.stream_response(text, session_id, context=(ui_context or {})):
+                if not got_first_chunk:
+                    got_first_chunk = True
+                full_response += chunk
+                await asyncio.sleep(0.01)
+
+            outcome = getattr(self.chatbot, 'get_last_outcome', lambda _sid: {}) (session_id)
+            if outcome.get("report_generated"):
+                rid = outcome.get("report_id")
+                if rid:
+                    pdf_path = self.chatbot.export_report_to_pdf(report_id=rid)
+                    report_title = Path(pdf_path).name.replace(".pdf", "").replace("_", " ") if pdf_path else None
+                    self._render_report_download_block(response_container, pdf_path=pdf_path, report_title=report_title, dense=False)
+                    try: spinner.delete()
+                    except: pass
+            else:
+                try: spinner.delete()
+                except: pass
+                response_label.text = full_response or "응답이 없습니다."
+        except Exception as e:
+            response_label.text = f"스트리밍 중 오류가 발생했습니다: {e}"
+        finally:
+            # 맨 아래로 스크롤
+            try:
+                ui.element('div').style('height: 1px;').classes('scroll-anchor')
+                await ui.run_javascript("""
+                    const el = document.querySelector('.scroll-anchor');
+                    if (el) el.scrollIntoView({behavior: 'smooth', block: 'end'});
+                """)
+            except Exception:
+                pass
+
+    async def _stream_ai_response(self, query: str, context: dict) -> None:
         v = self._get_view()
         if not v or 'results' not in v:
             ui.notify('결과 영역을 찾을 수 없습니다.', color='negative'); return
+
         session_id = self._get_session_id()
         results_area = v['results']
 
-        s = self._get_state()
+        # 좌측 선택값을 컨텍스트로 모델에 제공 (모델이 활용)
+        ui_ctx = {
+            "selected_intent":   context.get("intent"),
+            "selected_category": context.get("category", "all"),
+            "selected_period":   context.get("period", "current_year"),
+        }
 
-        with results_area:
-            with ui.row().classes("w-full items-start gap-2 mb-2"):
-                ui.avatar(icon="smart_toy", color="primary")
-                with ui.column().classes("max-w-[75%]"):
-                    ui.label("AI Assistant").classes("font-weight-bold text-xs text-gray-500")
+        # 좌측 의도가 보고서면 intent_hint 지정
+        intent_hint = "report_generation" if context.get("intent") == "report_generation" else None
 
-                    response_container = ui.column()
+        await self._render_and_stream_assistant(
+            text=query,
+            session_id=session_id,
+            results_area=results_area,
+            ui_context=ui_ctx,
+            intent_hint=intent_hint,
+        )
 
-        # 분기: '보고서 생성' 인텐트일 경우와 아닐 경우
-        if s.get("intent") == "report_generation":
-            with response_container:
-                pending_row = ui.row().classes("items-center gap-2")
-                with pending_row:
-                    ui.spinner(color='primary')
-                    ui.label("보고서를 생성하고 있습니다. 잠시만 기다려 주세요...").classes("text-body2")
-            await self._handle_report_generation(query, response_container, context)
-        else:
-            # 일반 텍스트 응답 스트리밍
-            with response_container:
-                pending_row = ui.row().classes("items-center gap-2")
-                with pending_row:
-                    ui.spinner(color='primary')
-                    ui.label("응답을 생성하고 있습니다. 잠시만 기다려 주세요...").classes("text-body2")
-                response_label = self._bubble_label("").classes("hidden")
-
-
-            full_response = ""
-            got_first_chunk = False
-            try:
-                async for chunk in self.chatbot.stream_response(query, session_id):
-                    if not got_first_chunk:
-                        # ⬇️ 첫 청크 도착 시 대기 UI 제거
-                        try:
-                            pending_row.delete()
-                        except:
-                            pass
-                        response_label.classes(remove='hidden')
-                        got_first_chunk = True
-
-                    full_response += chunk
-                    response_label.text = full_response
-                    await asyncio.sleep(0.01)  # UI 스무딩
-
-            except Exception as e:
-                try:
-                    pending_row.delete()
-                except:
-                    pass
-                response_label.classes(remove='hidden')
-                response_label.text = f"스트리밍 중 오류가 발생했습니다: {e}"
 
     async def _handle_report_generation(self, query: str, container: ui.column, context: dict) -> None:
         try:
@@ -465,28 +480,50 @@ class ChatbotPage(BasePage):
             # 2) 받은 report_id로 바로 PDF 내보내기
             pdf_path = self.chatbot.export_report_to_pdf(report_id=report_id)
 
-            container.clear()
-            with container:
-                if pdf_path:
-                    self._last_report_path = pdf_path
-                    report_title = Path(pdf_path).name.replace(".pdf", "").replace("_", " ")
-                    ui.label("✅ 보고서 생성이 완료되었습니다.").classes("text-body2 text-positive")
-                    ui.label(f"보고서명: {report_title}").classes("text-caption text-grey")
-                    ui.button("⬇️ PDF 다운로드", on_click=self._download_pdf).props("color=primary")
-                else:
-                    ui.label("⚠️ 보고서를 생성했지만 PDF 파일 경로를 얻지 못했습니다.").classes("text-warning")
+            # ✅ 공통 렌더러로 출력 (필터 실행 쪽은 보통 기본/비-컴팩트)
+            report_title = Path(pdf_path).name.replace(".pdf", "").replace("_", " ") if pdf_path else None
+            self._render_report_download_block(container, pdf_path=pdf_path, report_title=report_title, dense=False)
+
         except Exception as e:
             logger.error(f"보고서 생성 실패: {e}", exc_info=True)
             container.clear()
             with container:
                 ui.label(f"❌ 보고서 생성에 실패했습니다: {e}").classes("text-negative")
 
+    def _render_report_download_block(
+        self,
+        container: ui.column,
+        *,
+        pdf_path: str | None = None,
+        report_title: str | None = None,
+        dense: bool = True,
+    ) -> None:
+        """보고서 완료 메시지 + 파일명 + 다운로드 버튼을 일관된 스타일로 렌더."""
+        container.clear()
+        with container:
+            self._bubble_label("✅ 보고서가 생성되었습니다.").classes("mb-3")
+            if pdf_path:
+                # 상태에 저장 (기존 로직 재사용용)
+                self._last_report_path = pdf_path
+                if not report_title:
+                    report_title = Path(pdf_path).name.replace(".pdf", "").replace("_", " ")
+
+                ui.label(f"보고서명: {report_title}").classes("text-caption text-grey")
+                btn = ui.button("⬇️ PDF 다운로드", on_click=self._download_pdf)
+                btn.props(f"color=primary{' dense' if dense else ''}")
+            else:
+                ui.label("⚠️ 보고서를 생성했지만 PDF 파일 경로를 얻지 못했습니다.").classes("text-warning")
+
+
     def _download_pdf(self) -> None:
-        """생성된 PDF 파일을 다운로드합니다."""
-        if self._last_report_path and Path(self._last_report_path).exists():
-            ui.download(self._last_report_path)
-        else:
-            ui.notify("다운로드할 보고서 파일을 찾을 수 없습니다.", color="negative")
+        """최근 생성된 보고서 PDF를 다운로드."""
+        try:
+            if self._last_report_path and Path(self._last_report_path).exists():
+                ui.download(self._last_report_path)
+            else:
+                ui.notify("다운로드할 보고서 파일을 찾을 수 없습니다.", color="negative")
+        except Exception as ex:
+            ui.notify(f"다운로드 오류: {ex}", color="negative")
 
     # Quick action methods
     async def _quick_report(self) -> None:
@@ -531,6 +568,23 @@ class ChatbotPage(BasePage):
             .classes("text-body2 px-3 py-2 rounded-xl bg-blue-50 text-gray-900 shadow")\
             .style('white-space: pre-wrap; word-break: break-word')
 
+    def _assistant_block(self, result_area):
+        """어시스턴트 블럭(아바타/제목/컨테이너) 생성(컨테이너 안에서 호출)."""
+        with result_area:
+            with ui.row().classes("w-full items-start gap-2 mb-3"):
+                ui.avatar(icon="smart_toy", color="primary")
+                with ui.column().classes("max-w-[75%]"):
+                    ui.label("AI Assistant").classes("font-weight-bold text-xs text-gray-500")
+                    response_container = ui.column()
+        return response_container
+    
+    def _pending_bubble(self, text: str = "응답을 생성하고 있습니다. 잠시만 기다려 주세요..."):
+        """대기 중 스피너 + 메시지 말풍선 생성(컨테이너 안에서 호출)."""
+        row = ui.row().classes("items-center gap-2")
+        with row:
+            spinner = ui.spinner(color='primary')
+            bubble = self._bubble_label(text)  # <- 동일한 회색 버블 스타일 재사용
+        return row, spinner, bubble
 
     def _show_welcome_message(self) -> None:
         """Show welcome message."""
