@@ -107,37 +107,32 @@ class ESGReporterApp:
         """Setup navigation menu."""
         # Dashboard
         with ui.item(on_click=lambda: self._navigate_to('dashboard')):
-            with ui.item_section():
+            with ui.row().classes('items-center gap-2'):
                 ui.icon('dashboard')
-            with ui.item_section():
                 ui.item_label('Dashboard')
 
         # ERP 확장 메뉴 (회사관리, HR, 환경관리)
         with ui.expansion('ERP', icon='input', value=True).classes('q-pa-none') as erp_expansion:
             with ui.list().classes('q-pa-none'):
                 with ui.item(on_click=lambda: self._navigate_to('companies')):
-                    with ui.item_section():
+                    with ui.row().classes('items-center gap-2'):
                         ui.icon('business')
-                    with ui.item_section():
-                        ui.item_label('회사관리').classes('whitespace-nowrap')
+                        ui.item_label('회사관리')
                 with ui.item(on_click=lambda: self._navigate_to('hr')):
-                    with ui.item_section():
+                    with ui.row().classes('items-center gap-2'):
                         ui.icon('people')
-                    with ui.item_section():
-                        ui.item_label('HR').classes('whitespace-nowrap')
+                        ui.item_label('HR')
                 with ui.item(on_click=lambda: self._navigate_to('environment')):
-                    with ui.item_section():
+                    with ui.row().classes('items-center gap-2'):
                         ui.icon('eco')
-                    with ui.item_section():
-                        ui.item_label('환경관리').classes('whitespace-nowrap')
+                        ui.item_label('환경관리')
 
         # AI Chatbot
         with ui.item(on_click=lambda: self._navigate_to('chatbot')):
-            with ui.item_section():
+            with ui.row().classes('items-center gap-2'):
                 ui.icon('chat')
-            with ui.item_section():
                 ui.item_label('AI Chatbot')
-    
+        
     def _setup_routing(self) -> None:
         """Setup page routing."""
         @ui.page('/')
@@ -281,4 +276,5 @@ def create_app() -> None:
         favicon='🌱',
         show=settings.app.DEBUG,
         reload=settings.app.DEBUG
+        # on_air=True,
     )

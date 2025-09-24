@@ -84,7 +84,7 @@ class DashboardPage(BasePage):
                     with ui.column().classes('items-end'):
                         ui.label('ESG 종합점수').classes('text-sm text-gray-500 mb-1')
                         with ui.badge().classes('bg-green-500 text-white px-4 py-2 text-lg font-bold'):
-                            ui.label('B+')
+                            ui.label('A-')
     
     async def _render_metrics_overview(self, db_session: Session, cmp_num: str) -> None:
         """Render key metrics overview cards."""
@@ -120,7 +120,7 @@ class DashboardPage(BasePage):
                 value=f'{total_employees:,}명',
                 subtitle=f'여성 비율: {female_ratio:.1f}%',
                 color='blue',
-                trend='+2.3%'
+                trend='+5%'
             )
             
             self._create_metric_card(
@@ -194,7 +194,7 @@ class DashboardPage(BasePage):
                     with ui.row().classes('w-full items-center mb-4'):
                         ui.icon('people', size='2rem').classes('text-blue-600 mr-3')
                         ui.label('Social').classes('text-xl font-bold text-gray-800')
-                        ui.badge('B+').classes('bg-blue-500 text-white ml-auto')
+                        ui.badge('A').classes('bg-blue-500 text-white ml-auto')
                     
                     await self._render_social_details(db_session, cmp_num)
             
