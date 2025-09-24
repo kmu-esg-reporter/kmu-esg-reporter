@@ -72,7 +72,9 @@ class ESGReporterApp:
         """Setup main application layout."""
         # Header
         with ui.header(elevated=True).classes('items-center justify-between'):
-            with ui.row().classes('items-center'):
+            with ui.row().classes('items-center gap-2'):
+                ui.button(icon='menu', on_click=lambda: drawer.toggle()) \
+                    .props('flat round dense color=white')
                 ui.icon('eco', size='2rem').classes('text-green')
                 ui.label('ESG Reporter').classes('text-h5 font-weight-bold')
             
@@ -93,7 +95,7 @@ class ESGReporterApp:
             #             ui.menu_item('Logout', lambda: ui.notify('Logout clicked'))
         
         # Navigation drawer
-        with ui.left_drawer().classes('bg-blue-grey-1') as self.drawer:
+        with ui.left_drawer().classes('bg-blue-grey-1') as drawer:
             self._setup_navigation()
         
         # Main content area
@@ -108,31 +110,31 @@ class ESGReporterApp:
         # Dashboard
         with ui.item(on_click=lambda: self._navigate_to('dashboard')):
             with ui.row().classes('items-center gap-2'):
-                ui.icon('dashboard')
-                ui.item_label('Dashboard')
+                ui.icon('dashboard').props('size=sm')
+                ui.item_label('Dashboard').classes('text-body1')
 
         # ERP 확장 메뉴 (회사관리, HR, 환경관리)
-        with ui.expansion('ERP', icon='input', value=True).classes('q-pa-none') as erp_expansion:
+        with ui.expansion('ERP', icon='input', value=True).classes('q-pa-none text-body1') as erp_expansion:
             with ui.list().classes('q-pa-none'):
                 with ui.item(on_click=lambda: self._navigate_to('companies')):
                     with ui.row().classes('items-center gap-2'):
-                        ui.icon('business')
-                        ui.item_label('회사관리')
+                        ui.icon('business').props('size=s')
+                        ui.item_label('회사관리').classes('text-body2')
                 with ui.item(on_click=lambda: self._navigate_to('hr')):
                     with ui.row().classes('items-center gap-2'):
-                        ui.icon('people')
-                        ui.item_label('HR')
+                        ui.icon('people').props('size=s')
+                        ui.item_label('HR').classes('text-body2')
                 with ui.item(on_click=lambda: self._navigate_to('environment')):
                     with ui.row().classes('items-center gap-2'):
-                        ui.icon('eco')
-                        ui.item_label('환경관리')
+                        ui.icon('eco').props('size=s')
+                        ui.item_label('환경관리').classes('text-body2')
 
         # AI Chatbot
         with ui.item(on_click=lambda: self._navigate_to('chatbot')):
             with ui.row().classes('items-center gap-2'):
-                ui.icon('chat')
-                ui.item_label('AI Chatbot')
-        
+                ui.icon('chat').props('size=sm')
+                ui.item_label('AI Chatbot').classes('text-body1')
+
     def _setup_routing(self) -> None:
         """Setup page routing."""
         @ui.page('/')
