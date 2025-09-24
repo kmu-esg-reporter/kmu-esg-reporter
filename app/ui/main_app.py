@@ -277,6 +277,7 @@ def create_app() -> None:
         title=settings.app.APP_NAME,
         favicon='🌱',
         show=settings.app.DEBUG,
-        reload=settings.app.DEBUG
-        # on_air=True,
+        reload=settings.app.DEBUG,
+        storage_secret=settings.app.STORAGE_SECRET_KEY,
+        on_air=False,
     )
