@@ -37,18 +37,29 @@ def _normalize_env(metrics: Dict[str, Any]) -> Dict[str, Any]:
     renew_ratio = cur.get("renewable_ratio")
 
     overview = {
-        "최신 연도": cur.get("latest_year"),
-        "에너지 사용량(MWh)": energy_use,
-        "온실가스 배출량(tCO₂e)": ghg,
-        "재생에너지 사용(Y/N)": cur.get("renewable_yn"),
-        "재생에너지 비율(%)": renew_ratio,
+        "최신 연도": cur.get("latest_year") or "N/A",
+        "에너지 사용량(MWh)": f"{energy_use:,.1f}" if energy_use else "N/A",
+        "온실가스 배출량(tCO₂e)": f"{ghg:,.1f}" if ghg else "N/A",
+        "재생에너지 사용(Y/N)": cur.get("renewable_yn") or "N",
+        "재생에너지 비율(%)": f"{renew_ratio:.1%}" if renew_ratio else "0%",
     }
 
+    # 직원 수 기반 집약도 계산
+    total_employees = cur.get("total_employees", 0)
+    energy_intensity = None
+    ghg_intensity = None
+    
+    if total_employees and total_employees > 0:
+        if energy_use:
+            energy_intensity = f"{energy_use/total_employees:.2f}"
+        if ghg:
+            ghg_intensity = f"{ghg/total_employees:.2f}"
+    
     kpis = [
-        {"label": "에너지 집약도(MWh/인)", "value": None, "note": "직원 수 연동 시 계산"},
-        {"label": "GHG 집약도(tCO₂e/인)", "value": None, "note": "직원 수 연동 시 계산"},
-        {"label": "YoY 에너지 증감(%)", "value": _mk_yoy(energy_use, prev.get("energy_use"))},
-        {"label": "YoY 배출량 증감(%)", "value": _mk_yoy(ghg, prev.get("green_use") or prev.get("ghg_emissions"))},
+        {"label": "에너지 집약도(MWh/인)", "value": energy_intensity or "직원 정보 없음", "note": "총 직원 수 기준"},
+        {"label": "GHG 집약도(tCO₂e/인)", "value": ghg_intensity or "직원 정보 없음", "note": "총 직원 수 기준"},
+        {"label": "YoY 에너지 증감(%)", "value": f"{_mk_yoy(energy_use, prev.get('energy_use')):.1f}%" if _mk_yoy(energy_use, prev.get("energy_use")) else "데이터 부족"},
+        {"label": "YoY 배출량 증감(%)", "value": f"{_mk_yoy(ghg, prev.get('green_use') or prev.get('ghg_emissions')):.1f}%" if _mk_yoy(ghg, prev.get("green_use") or prev.get("ghg_emissions")) else "데이터 부족"},
         {"label": "재생에너지 구매/자체발전 계획", "value": cur.get("renewable_plan", "미등록")},
     ]
 
@@ -70,8 +81,8 @@ def _normalize_env(metrics: Dict[str, Any]) -> Dict[str, Any]:
         {"risk": "배출권 가격 변동", "mitigation": "조기감축·내부 탄소가격 도입"},
     ]
 
-    # 2페이지 보장: 항목 수 패딩
-    kpis = _pad(kpis, 6, {"label": "추가 KPI", "value": None, "note": "데이터 입력 필요"})
+    # 2페이지 보장: 항목 수 패딩 (의미있는 항목으로 변경)
+    kpis = _pad(kpis, 6, {"label": "탄소중립 목표년도", "value": "2050", "note": "국가 탄소중립 목표"})
     highlights = _pad(highlights, 4, {"title": "추가 하이라이트", "desc": "데이터 입력 필요"})
     actions = _pad(actions, 6, {"action": "추가 과제", "impact": "데이터 입력 필요"})
     risks = _pad(risks, 3, {"risk": "추가 리스크", "mitigation": "대응방안 수립"})

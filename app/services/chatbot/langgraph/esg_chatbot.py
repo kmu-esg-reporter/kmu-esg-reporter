@@ -110,11 +110,11 @@ class ESGReportChatbot:
             """회사의 실제 ESG 원본 데이터와 메트릭을 모두 제공"""
             try:
                 # 1. 원본 데이터 수집
-                emp_df = self.dataprocessor.get_employee_data()
-                env_df = self.dataprocessor.get_environmental_data() 
+                emp_df = self.data_processor.get_employee_data()
+                env_df = self.data_processor.get_environmental_data() 
                 
                 # 2. 메트릭 계산
-                comprehensive_report = self.dataprocessor.generate_comprehensive_report(cmp_num)
+                comprehensive_report = self.data_processor.generate_comprehensive_report(cmp_num)
                 
                 # 3. 원본 + 메트릭 모두 반환
                 result = {
@@ -179,16 +179,26 @@ class ESGReportChatbot:
                 enriched = await enricher._enrich_with_guard(esg_metrics)
 
                 # 템플릿 입력은 우리가 만든 정규화 루틴이 처리
-                # build_report_html에 전달할 때, 'ai' 블럭을 함께 넘겨 템플릿에서 사용
+                ## build_report_html에 전달할 때, 'ai' 블럭을 함께 넘겨 템플릿에서 사용
+                # period_label = f"{datetime.now().year - 1}년도 기준"
+                # final_html = build_report_html(
+                #     company_info=company_info,
+                #     period_label=period_label,
+                #     summary_metrics=enriched.get("summary", {}),     # 상단 Executive Summary 카드에 활용
+                #     env_metrics={**esg_metrics.get("environment", {}), "ai": enriched["environment"]["ai"]},
+                #     soc_metrics={**esg_metrics.get("social", {}), "ai": enriched["social"]["ai"]},
+                #     gov_metrics={**esg_metrics.get("governance", {}), "ai": enriched["governance"]["ai"]},
+                # )
                 period_label = f"{datetime.now().year - 1}년도 기준"
                 final_html = build_report_html(
                     company_info=company_info,
                     period_label=period_label,
-                    summary_metrics=enriched.get("summary", {}),     # 상단 Executive Summary 카드에 활용
-                    env_metrics={**esg_metrics.get("environment", {}), "ai": enriched["environment"]["ai"]},
-                    soc_metrics={**esg_metrics.get("social", {}), "ai": enriched["social"]["ai"]},
-                    gov_metrics={**esg_metrics.get("governance", {}), "ai": enriched["governance"]["ai"]},
+                    summary_metrics=enriched.get("summary", {}),     # 상단 Executive Summary 카드에 활용,
+                    env_metrics={**esg_metrics.get("environmental", {}), "ai": enriched.get("environmental", {}).get("ai", {})},
+                    soc_metrics={**esg_metrics.get("social", {}), "ai": enriched.get("social", {}).get("ai", {})},
+                    gov_metrics={**esg_metrics.get("governance", {}), "ai": enriched.get("governance", {}).get("ai", {})},
                 )
+
 
                 report_title = f"{company.cmp_nm} ESG 보고서 ({datetime.now().strftime('%Y-%m-%d')})"
                 report = Report(

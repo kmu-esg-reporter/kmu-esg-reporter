@@ -223,11 +223,11 @@ class ChatbotPage(BasePage):
         quick_actions = [
             ("📋 빠른 보고서", "Generate basic ESG report", self._quick_report),
             ("📊 현재 상태", "Show current ESG status", self._quick_status),
-            (
-                "❓ 데이터 무결성 체크",
-                "Check data completeness",
-                self._quick_health_check,
-            ),
+            # (
+            #     "❓ 데이터 무결성 체크",
+            #     "Check data completeness",
+            #     self._quick_health_check,
+            # ),
         ]
 
         for label, tooltip, action in quick_actions:
@@ -483,7 +483,7 @@ class ChatbotPage(BasePage):
 
     async def _handle_report_generation(self, query: str, container: ui.column, context: dict) -> None:
         try:
-            # 1) 보고서 직접 생성(LLM 스트리밍 우회): 도구를 dict로 호출
+           # 1) 보고서 직접 생성(LLM 스트리밍 우회): 도구를 dict로 호출
             report_type = "comprehensive" if context.get("category") in (None, "all") else "category_specific"
             gen_res_raw = await self.chatbot.tools[3].arun({"cmp_num": self.cmp_num, "report_type": report_type})
             gen_res = json.loads(gen_res_raw)

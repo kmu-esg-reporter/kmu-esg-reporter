@@ -215,9 +215,9 @@
           {% for t in section.metrics.trends %}
           <tr>
             <td class="tcfd-number">{{ t.year or t.get('year', 'N/A') }}</td>
-            <td style="text-align: right;" class="metric-value">{{ t.energy_use or t.get('energy_use', 'N/A') }}</td>
-            <td style="text-align: right;" class="metric-value">{{ t.ghg_emissions or t.get('ghg_emissions', 'N/A') }}</td>
-            <td style="text-align: right;" class="metric-value">{{ t.renewable_ratio or t.get('renewable_ratio', 'N/A') }}</td>
+            <td style="text-align: right;" class="metric-value">{{ "{:,.1f}".format(t.energy_use) if t.energy_use else 'N/A' }}</td>
+            <td style="text-align: right;" class="metric-value">{{ "{:,.1f}".format(t.ghg_emissions or t.green_use) if (t.ghg_emissions or t.green_use) else 'N/A' }}</td>
+            <td style="text-align: right;" class="metric-value">{{ "{:.1%}".format(t.renewable_ratio) if t.renewable_ratio else 'N/A' }}</td>
           </tr>
           {% endfor %}
         </tbody>

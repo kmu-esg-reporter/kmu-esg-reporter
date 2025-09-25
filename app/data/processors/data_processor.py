@@ -219,7 +219,7 @@ class ESGDataProcessor:
     #     return metrics
     
     
-    def calculate_environmental_metrics(self, env_df: pd.DataFrame) -> Dict[str, Any]:
+    def calculate_environmental_metrics(self, env_df: pd.DataFrame, emp_df: Optional[pd.DataFrame] = None) -> Dict[str, Any]:
         """환경(Environmental) 지표 계산"""
         if env_df.empty:
             return {}
@@ -230,12 +230,19 @@ class ESGDataProcessor:
         latest_year = env_df['year'].max()
         latest_data = env_df[env_df['year'] == latest_year].iloc[0]
         
+        # 직원 수 계산 (집약도 계산용)
+        total_employees = 0
+        if emp_df is not None and not emp_df.empty:
+            total_employees = len(emp_df[emp_df['emp_endyn'] == 'Y'])  # 재직 중인 직원만
+        
         metrics['current_status'] = {
             'latest_year': int(latest_year),
             'energy_use': float(latest_data['energy_use']) if latest_data['energy_use'] else 0,
             'green_use': float(latest_data['green_use']) if latest_data['green_use'] else 0,
+            'ghg_emissions': float(latest_data['green_use']) if latest_data['green_use'] else 0,  # green_use를 ghg_emissions로도 매핑
             'renewable_yn': latest_data['renewable_yn'],
-            'renewable_ratio': latest_data['renewable_ratio'] if latest_data['renewable_ratio'] else 0
+            'renewable_ratio': latest_data['renewable_ratio'] if latest_data['renewable_ratio'] else 0,
+            'total_employees': total_employees  # 집약도 계산용 직원 수 추가
         }
         
         # 트렌드 분석 추가 (generator.py에서 기대하는 형태)
@@ -244,7 +251,9 @@ class ESGDataProcessor:
             trends.append({
                 'year': int(row['year']),
                 'energy_use': float(row['energy_use']) if row['energy_use'] else 0,
-                'green_use': float(row['green_use']) if row['green_use'] else 0
+                'green_use': float(row['green_use']) if row['green_use'] else 0,
+                'ghg_emissions': float(row['green_use']) if row['green_use'] else 0,  # green_use를 ghg_emissions로도 매핑
+                'renewable_ratio': float(row['renewable_ratio']) if row['renewable_ratio'] else 0  # 재생에너지 비율 추가
             })
         
         metrics['trends'] = trends
@@ -255,9 +264,16 @@ class ESGDataProcessor:
         """지배구조(Governance) 지표 계산"""
         metrics = {}
         
+        # 전체 사업장의 사외이사 수 합산
+        cmp_num = company_info.get('cmp_num')
+        total_external_directors = 0
+        if cmp_num:
+            all_branches = self.db.query(CmpInfo).filter(CmpInfo.cmp_num == cmp_num).all()
+            total_external_directors = sum(branch.cmp_extemp or 0 for branch in all_branches)
+        
         # 회사 기본 지배구조 정보
         metrics['basic_governance'] = {
-            'external_directors': company_info.get('cmp_extemp', 0),
+            'external_directors': total_external_directors,
             'ethics_policy': company_info.get('cmp_ethics_yn') == 'Y',
             'compliance_policy': company_info.get('cmp_comp_yn') == 'Y'
         }
@@ -266,10 +282,10 @@ class ESGDataProcessor:
         board_df = emp_df[emp_df['emp_board_yn'] == 'Y'] if not emp_df.empty else pd.DataFrame()
         
         metrics['board'] = {
-            'inside': len(board_df),  # 실제로는 사내/사외 구분 필요
-            'outside': company_info.get('cmp_extemp', 0),
+            'inside': len(board_df),  # 사내이사 (직원 중 이사회 멤버)
+            'outside': total_external_directors,  # 전체 사업장의 사외이사 합계
             'female': len(board_df[board_df['emp_gender'] == '2']) if not board_df.empty else 0,
-            'independent': company_info.get('cmp_extemp', 0)
+            'independent': total_external_directors  # 사외이사 = 독립이사로 가정
         }
         
         return metrics
@@ -297,7 +313,7 @@ class ESGDataProcessor:
         env_df = self.get_environmental_data()
 
         social = self.calculate_social_metrics(emp_df)
-        env = self.calculate_environmental_metrics(env_df)
+        env = self.calculate_environmental_metrics(env_df, emp_df)  # emp_df 전달
         gov = self.calculate_governance_metrics(company_info, emp_df)
 
         data_summary = {
