@@ -80,6 +80,13 @@ class AppSettings(BaseSettings):
         description="Secret key for session management"
     )
     
+    # Security
+    STORAGE_SECRET_KEY: str = Field(
+        default="999555",
+        description="Secret key for session management"
+    )
+
+    
     class Config:
         env_file = ".env"
         extra = "ignore"
