@@ -1,73 +1,280 @@
-<!-- app/service/report/templates/section_social.html -->
+<style>
+  .tcfd-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    margin: 20px 0;
+    overflow: hidden;
+  }
+
+  .tcfd-card-header {
+    background: #1e3a5f;
+    color: white;
+    padding: 12px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    border-bottom: 3px solid #0066cc;
+  }
+
+  .tcfd-card-content {
+    padding: 16px;
+  }
+
+  /* 메트릭 컨테이너 - 그리드 제거 */
+  .metric-grid {
+    display: block;
+    padding: 8px;
+  }
+
+  .metric-item {
+    background: #ffffff !important;
+    border: 4px solid #ff6b6b !important;
+    border-radius: 16px !important;
+    padding: 24px 20px !important;
+    text-align: center !important;
+    box-shadow: 
+      0 0 0 2px #ff6b6b,
+      0 4px 12px rgba(255, 107, 107, 0.3),
+      0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 12px !important;
+    min-height: 120px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    outline: 3px solid #e74c3c !important;
+    outline-offset: -3px !important;
+  }
+
+  .metric-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8, #0f172a);
+    border-radius: 16px 16px 0 0;
+  }
+
+  .metric-item:hover {
+    transform: translateY(-6px) scale(1.02);
+    border-color: #3b82f6 !important;
+    box-shadow: 
+      0 12px 24px rgba(59, 130, 246, 0.15),
+      0 6px 12px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .metric-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #374151;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.4;
+  }
+
+  .metric-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1d4ed8;
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    line-height: 1.2;
+  }
+
+  /* 리스트 카드 */
+  .list-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .list-item {
+    border-left: 4px solid #0066cc;
+    background: #f9fafb;
+    padding: 12px 16px;
+    border-radius: 6px;
+  }
+</style>
+
 <section>
-  <h2>Social — Overview</h2>
-  <div class="grid">
-    {% for k, v in section.metrics.overview.items() %}
-      <div class="card">
-        <strong>{{ k }}</strong><br/>{{ v if v is not none else '-' }}
-      </div>
-    {% endfor %}
+  <!-- Social Overview -->
+  <div class="tcfd-card">
+    <div class="tcfd-card-header">👥 Social — Overview</div>
+    <div class="tcfd-card-content">
+      <table style="width: 100%; border: 1px solid #ddd; border-collapse: collapse;">
+        {% for k, v in section.metrics.overview.items() %}
+        <tr style="border: none;">
+          <td style="
+            padding: 6px 15px; 
+            text-align: left; 
+            font-size: 12px; 
+            font-weight: bold; 
+            color: #666666;
+            border: none;
+            border-bottom: 1px solid #eee;
+            line-height: 1.2;
+          ">{{ k }}</td>
+          <td style="
+            padding: 6px 15px; 
+            text-align: right; 
+            font-size: 14px; 
+            font-weight: bold; 
+            color: #333;
+            border: none;
+            border-bottom: 1px solid #eee;
+            line-height: 1.2;
+          ">{{ v if v is not none else '-' }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
   </div>
 
-  <h3 style="margin-top:8px">Diversity</h3>
-  <div class="grid">
-    {% for d in section.metrics.diversity %}
-      <div class="card">
-        <strong>{{ d.label }}</strong><br/>{{ d.value if d.value is not none else '-' }}
-      </div>
-    {% endfor %}
+  <!-- Diversity -->
+  <div class="tcfd-card">
+    <div class="tcfd-card-header">🌎 Diversity</div>
+    <div class="tcfd-card-content">
+      <table style="width: 100%; border: 1px solid #ddd; border-collapse: collapse;">
+        {% for d in section.metrics.diversity %}
+        <tr style="border: none;">
+          <td style="
+            padding: 6px 15px; 
+            text-align: left; 
+            font-size: 12px; 
+            font-weight: bold; 
+            color: #666666;
+            border: none;
+            border-bottom: 1px solid #eee;
+            line-height: 1.2;
+          ">{{ d.label }}</td>
+          <td style="
+            padding: 6px 15px; 
+            text-align: right; 
+            font-size: 14px; 
+            font-weight: bold; 
+            color: #333;
+            border: none;
+            border-bottom: 1px solid #eee;
+            line-height: 1.2;
+          ">{{ d.value if d.value is not none else '-' }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
   </div>
 
-  <h3 style="margin-top:8px">Safety</h3>
-  <div class="grid">
-    {% for s in section.metrics.safety %}
-      <div class="card">
-        <strong>{{ s.label }}</strong><br/>{{ s.value if s.value is not none else '-' }}
-      </div>
-    {% endfor %}
+  <!-- Safety -->
+  <div class="tcfd-card">
+    <div class="tcfd-card-header">🛡️ Safety</div>
+    <div class="tcfd-card-content">
+      <table style="width: 100%; border: 1px solid #ddd; border-collapse: collapse;">
+        {% for s in section.metrics.safety %}
+        <tr style="border: none;">
+          <td style="
+            padding: 6px 15px; 
+            text-align: left; 
+            font-size: 12px; 
+            font-weight: bold; 
+            color: #666666;
+            border: none;
+            border-bottom: 1px solid #eee;
+            line-height: 1.2;
+          ">{{ s.label }}</td>
+          <td style="
+            padding: 6px 15px; 
+            text-align: right; 
+            font-size: 14px; 
+            font-weight: bold; 
+            color: #333;
+            border: none;
+            border-bottom: 1px solid #eee;
+            line-height: 1.2;
+          ">{{ s.value if s.value is not none else '-' }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
   </div>
 </section>
 
 <div class="page-break"></div>
 
 <section>
-  <h2>Social — Details</h2>
-
-  <h3>Training</h3>
-  <div class="grid">
-    {% for t in section.metrics.training %}
-      <div class="card">
-        <strong>{{ t.label }}</strong><br/>{{ t.value if t.value is not none else '-' }}
-      </div>
-    {% endfor %}
-  </div>
-
-  <h3 style="margin-top:8px">Programs</h3>
-  <div class="grid">
-    {% for p in section.metrics.programs %}
-      <div class="card">
-        <strong>{{ p.title }}</strong><br/>{{ p.desc }}
-      </div>
-    {% endfor %}
-  </div>
-
-  <h3 style="margin-top:8px">Actions</h3>
-  <div class="grid">
-    {% for a in section.metrics.actions %}
-      <div class="card">
-        <strong>{{ a.action }}</strong><br/>{{ a.impact }}
-      </div>
-    {% endfor %}
-  </div>
-
-  {% if section.metrics.stories and section.metrics.stories|length > 0 %}
-    <h3 style="margin-top:8px">Case Studies / Stories</h3>
-    <div class="card">
-      <ul>
-        {% for s in section.metrics.stories %}
-          <li>{{ s }}</li>
+  <!-- Training -->
+  <div class="tcfd-card">
+    <div class="tcfd-card-header">📚 Training</div>
+    <div class="tcfd-card-content">
+      <table style="width: 100%; border: 1px solid #ddd; border-collapse: collapse;">
+        {% for t in section.metrics.training %}
+        <tr style="border: none;">
+          <td style="
+            padding: 6px 15px; 
+            text-align: left; 
+            font-size: 12px; 
+            font-weight: bold; 
+            color: #666666;
+            border: none;
+            border-bottom: 1px solid #eee;
+            line-height: 1.2;
+          ">{{ t.label }}</td>
+          <td style="
+            padding: 6px 15px; 
+            text-align: right; 
+            font-size: 14px; 
+            font-weight: bold; 
+            color: #333;
+            border: none;
+            border-bottom: 1px solid #eee;
+            line-height: 1.2;
+          ">{{ t.value if t.value is not none else '-' }}</td>
+        </tr>
         {% endfor %}
-      </ul>
+      </table>
     </div>
+  </div>
+
+  <!-- Programs -->
+  <div class="tcfd-card">
+    <div class="tcfd-card-header">🎯 Programs</div>
+    <div class="tcfd-card-content list-card">
+      {% for p in section.metrics.programs %}
+      <div class="list-item">
+        <strong>{{ p.title }}</strong><br>
+        {{ p.desc }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="tcfd-card">
+    <div class="tcfd-card-header">⚡ Actions</div>
+    <div class="tcfd-card-content list-card">
+      {% for a in section.metrics.actions %}
+      <div class="list-item">
+        <strong>{{ a.action }}</strong><br>
+        <em>Impact:</em> {{ a.impact }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Stories -->
+  {% if section.metrics.stories and section.metrics.stories|length > 0 %}
+  <div class="tcfd-card">
+    <div class="tcfd-card-header">📖 Case Studies / Stories</div>
+    <div class="tcfd-card-content list-card">
+      {% for s in section.metrics.stories %}
+      <div class="list-item">{{ s }}</div>
+      {% endfor %}
+    </div>
+  </div>
   {% endif %}
 </section>

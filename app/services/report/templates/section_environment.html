@@ -1,76 +1,228 @@
-<!-- app/service/report/templates/section_environment.html -->
+<style>
+  /* TCFD 스타일 */
+  .tcfd-section {
+    margin: 30px 0;
+  }
+
+  .tcfd-header {
+    background: #1e3a5f;
+    color: white;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border-left: 4px solid #0066cc;
+  }
+
+  .tcfd-content {
+    background: white;
+    border: 1px solid #d0d7de;
+  }
+
+  .tcfd-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+    font-size: 10px;
+  }
+
+  .tcfd-table th {
+    background: #f6f8fa;
+    color: #24292f;
+    font-weight: 600;
+    padding: 8px 10px;
+    text-align: center;
+    border-top: 1px solid #d0d7de;
+    border-bottom: 1px solid #d0d7de;
+    border-right: 1px solid #d0d7de;
+  }
+
+  .tcfd-table th:last-child {
+    border-right: none;
+  }
+
+  .tcfd-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #eaeef2;
+    border-right: 1px solid #eaeef2;
+    color: #24292f;
+    line-height: 1.3;
+  }
+
+  .tcfd-table td:last-child {
+    border-right: none;
+  }
+
+  .tcfd-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .tcfd-table tr:nth-child(even) {
+    background: #f8f9fa;
+  }
+
+  /* 번호 컬럼 스타일 */
+  .tcfd-number {
+    width: 40px;
+    text-align: center;
+    font-weight: 600;
+    color: #656d76;
+  }
+
+  /* 메트릭 강조 */
+  .metric-value {
+    font-weight: normal;
+    color: #0969da;
+    font-size: 10px !important;
+  }
+
+  /* 리스크 레벨 색상 */
+  .risk-high { color: #d1242f; font-weight: 600; }
+  .risk-medium { color: #fb8500; font-weight: 600; }
+  .risk-low { color: #1f883d; font-weight: 600; }
+</style>
+
+
 <section>
-  <h2>Environmental — Overview</h2>
-  <div class="grid">
-    {% for k, v in section.metrics.overview.items() %}
-      <div class="card">
-        <strong>{{ k }}</strong><br/>{{ v if v is not none else '-' }}
-      </div>
-    {% endfor %}
+  <!-- 환경 개요 -->
+  <div class="tcfd-section">
+    <div class="tcfd-header">ENVIRONMENTAL OVERVIEW</div>
+    <div class="tcfd-content">
+      <table class="tcfd-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">No.</th>
+            <th>환경 지표</th>
+            <th style="width: 120px;">측정값</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for k, v in section.metrics.overview.items() %}
+          <tr>
+            <td class="tcfd-number">{{ loop.index }}</td>
+            <td>{{ k }}</td>
+            <td class="metric-value">{{ v if v is not none else 'N/A' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 
-  <h3 style="margin-top:8px">Key KPIs</h3>
-  <div class="grid">
-    {% for row in section.metrics.kpis %}
-      <div class="card">
-        <strong>{{ row.label }}</strong><br/>
-        {{ row.value if row.value is not none else '-' }}
-        {% if row.note %}<div class="muted">{{ row.note }}</div>{% endif %}
-      </div>
-    {% endfor %}
+  <!-- 핵심 성과지표 -->
+  <div class="tcfd-section">
+    <div class="tcfd-header">KEY PERFORMANCE INDICATORS</div>
+    <div class="tcfd-content">
+      <table class="tcfd-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">No.</th>
+            <th>지표명</th>
+            <th style="width: 100px;">측정값</th>
+            <th>비고</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in section.metrics.kpis %}
+          <tr>
+            <td class="tcfd-number">{{ loop.index }}</td>
+            <td>{{ row.label }}</td>
+            <td class="metric-value">{{ row.value if row.value is not none else 'N/A' }}</td>
+            <td>{{ row.note if row.note else '-' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </section>
 
 <div class="page-break"></div>
 
 <section>
-  <h2>Environmental — Details</h2>
-
-  <h3>Highlights & Risks</h3>
-  <div class="grid">
-    {% for h in section.metrics.highlights %}
-      <div class="card"><strong>{{ h.title }}</strong><br/>{{ h.desc }}</div>
-    {% endfor %}
-    {% for r in section.metrics.risks %}
-      <div class="card">
-        <strong>리스크</strong>: {{ r.risk }}<br/>
-        <span class="muted">대응</span>: {{ r.mitigation }}
-      </div>
-    {% endfor %}
-  </div>
-
-  <h3 style="margin-top:8px">Actions</h3>
-  <div class="grid">
-    {% for a in section.metrics.actions %}
-      <div class="card">
-        <strong>{{ a.action }}</strong><br/>{{ a.impact }}
-      </div>
-    {% endfor %}
-  </div>
-
-  {% if section.metrics.trends and section.metrics.trends|length > 0 %}
-    <h3 style="margin-top:8px">Trends</h3>
-    <div class="card">
-      <table>
+  <!-- 주요 성과 및 리스크 -->
+  <div class="tcfd-section">
+    <div class="tcfd-header">HIGHLIGHTS & RISK ASSESSMENT</div>
+    <div class="tcfd-content">
+      <table class="tcfd-table">
         <thead>
           <tr>
-            <th>연도</th>
-            <th>에너지(MWh)</th>
-            <th>GHG(tCO₂e)</th>
-            <th>재생 비율(%)</th>
+            <th style="width: 40px;">No.</th>
+            <th style="width: 80px;">구분</th>
+            <th>내용</th>
           </tr>
         </thead>
         <tbody>
-          {% for t in section.metrics.trends %}
+          {% for h in section.metrics.highlights %}
           <tr>
-            <td>{{ t.year or t.get('year', '-') }}</td>
-            <td>{{ t.energy_use or t.get('energy_use', '-') }}</td>
-            <td>{{ t.green_use or t.get('ghg_emissions', '-') }}</td>
-            <td>{{ t.renewable_ratio or t.get('renewable_ratio', '-') }}</td>
+            <td class="tcfd-number">{{ loop.index }}</td>
+            <td><span class="risk-low">성과</span></td>
+            <td><strong>{{ h.title }}</strong><br>{{ h.desc }}</td>
+          </tr>
+          {% endfor %}
+          {% for r in section.metrics.risks %}
+          <tr>
+            <td class="tcfd-number">{{ loop.index + section.metrics.highlights|length }}</td>
+            <td><span class="risk-medium">리스크</span></td>
+            <td><strong>{{ r.risk }}</strong><br><em>대응방안:</em> {{ r.mitigation }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+  </div>
+
+  <!-- 실행 계획 -->
+  <div class="tcfd-section">
+    <div class="tcfd-header">ACTION PLANS</div>
+    <div class="tcfd-content">
+      <table class="tcfd-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">No.</th>
+            <th>실행 항목</th>
+            <th style="width: 160px;">예상 효과</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in section.metrics.actions %}
+          <tr>
+            <td class="tcfd-number">{{ loop.index }}</td>
+            <td>{{ a.action }}</td>
+            <td>{{ a.impact }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 연도별 추세 -->
+  {% if section.metrics.trends and section.metrics.trends|length > 0 %}
+  <div class="tcfd-section">
+    <div class="tcfd-header">HISTORICAL TRENDS</div>
+    <div class="tcfd-content">
+      <table class="tcfd-table">
+        <thead>
+          <tr>
+            <th style="width: 60px;">연도</th>
+            <th>에너지 사용량<br><small>(MWh)</small></th>
+            <th>온실가스 배출량<br><small>(tCO₂e)</small></th>
+            <th>재생에너지 비율<br><small>(%)</small></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in section.metrics.trends %}
+          <tr>
+            <td class="tcfd-number">{{ t.year or t.get('year', 'N/A') }}</td>
+            <td style="text-align: right;" class="metric-value">{{ t.energy_use or t.get('energy_use', 'N/A') }}</td>
+            <td style="text-align: right;" class="metric-value">{{ t.ghg_emissions or t.get('ghg_emissions', 'N/A') }}</td>
+            <td style="text-align: right;" class="metric-value">{{ t.renewable_ratio or t.get('renewable_ratio', 'N/A') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
   {% endif %}
 </section>

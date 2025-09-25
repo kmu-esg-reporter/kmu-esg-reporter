@@ -1,76 +1,121 @@
-<!-- app/service/report/templates/section_governance.html -->
-<section>
-  <h2>Governance — Overview</h2>
-  <div class="grid">
-    {% for k, v in section.metrics.overview.items() %}
-      <div class="card">
-        <strong>{{ k }}</strong><br/>{{ v if v is not none else '-' }}
-      </div>
-    {% endfor %}
+<  <!-- Governance Overview -->
+  <div class="tcfd-card">
+    <div class="tcfd-card-header">🏦 Governance — Overview</div>
+    <div class="tcfd-card-content">
+      <table style="width: 100%; border: 1px solid #ddd; border-collapse: collapse;">
+        {% for k, v in section.metrics.overview.items() %}
+        <tr style="border: none;">
+          <td style="
+            padding: 6px 15px; 
+            text-align: left; 
+            font-size: 12px; 
+            font-weight: bold; 
+            color: #666666;
+            border: none;
+            border-bottom: 1px solid #eee;
+            line-height: 1.2;
+          ">{{ k }}</td>
+          <td style="
+            padding: 6px 15px; 
+            text-align: right; 
+            font-size: 14px; 
+            font-weight: bold; 
+            color: #333;
+            border: none;
+            border-bottom: 1px solid #eee;
+            line-height: 1.2;
+          ">{{ v if v is not none else '-' }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
   </div>
 
-  <h3 style="margin-top:8px">Policies</h3>
-  <div class="grid">
-    {% for p in section.metrics.policies %}
-      <div class="card">
-        <strong>{{ p.label }}</strong><br/>{{ p.value if p.value is not none else '-' }}
+  <!-- Policies -->
+  <div class="tcfd-card">
+    <div class="tcfd-card-header">📜 Policies</div>
+    <div class="tcfd-card-content list-card">
+      {% for p in section.metrics.policies %}
+      <div class="list-item">
+        <strong>{{ p.label }}</strong><br>
+        {{ p.value if p.value is not none else '-' }}
       </div>
-    {% endfor %}
+      {% endfor %}
+    </div>
   </div>
 </section>
 
 <div class="page-break"></div>
 
 <section>
-  <h2>Governance — Details</h2>
-
-  <h3>Board Composition</h3>
-  <div class="card">
-    <table>
-      <thead>
-        <tr>
-          <th>구성</th>
-          <th>인원(명)</th>
-        </tr>
-      </thead>
-      <tbody>
+  <!-- Board Composition -->
+  <div class="tcfd-card">
+    <div class="tcfd-card-header">👥 Board Composition</div>
+    <div class="tcfd-card-content">
+      <table style="width: 100%; border: 1px solid #ddd; border-collapse: collapse;">
         {% for row in section.metrics.board_table %}
-        <tr>
-          <td>{{ row.role }}</td>
-          <td>{{ row.count if row.count is not none else '-' }}</td>
+        <tr style="border: none;">
+          <td style="
+            padding: 6px 15px; 
+            text-align: left; 
+            font-size: 12px; 
+            font-weight: bold; 
+            color: #666666;
+            border: none;
+            border-bottom: 1px solid #eee;
+            line-height: 1.2;
+          ">{{ row.role }}</td>
+          <td style="
+            padding: 6px 15px; 
+            text-align: right; 
+            font-size: 14px; 
+            font-weight: bold; 
+            color: #333;
+            border: none;
+            border-bottom: 1px solid #eee;
+            line-height: 1.2;
+          ">{{ row.count if row.count is not none else '-' }}</td>
         </tr>
         {% endfor %}
-      </tbody>
-    </table>
-  </div>
-
-  <h3 style="margin-top:8px">Risks & Mitigations</h3>
-  <div class="grid">
-    {% for r in section.metrics.risks %}
-      <div class="card">
-        <strong>리스크</strong>: {{ r.risk }}<br/>
-        <span class="muted">대응</span>: {{ r.mitigation }}
-      </div>
-    {% endfor %}
-  </div>
-
-  <h3 style="margin-top:8px">Actions</h3>
-  <div class="grid">
-    {% for a in section.metrics.actions %}
-      <div class="card">
-        <strong>{{ a.action }}</strong><br/>{{ a.impact }}
-      </div>
-    {% endfor %}
-  </div>
-
-  {% if section.metrics.disclosures and section.metrics.disclosures|length > 0 %}
-    <h3 style="margin-top:8px">Disclosures</h3>
-    <div class="card">
-      <ul>
-        {% for d in section.metrics.disclosures %}
-          <li>{{ d }}</li>
-        {% endfor %}
-      </ul>
+      </table>
     </div>
+  </div>
+
+  <!-- Risks & Mitigations -->
+  <div class="tcfd-card">
+    <div class="tcfd-card-header">⚠️ Risks & Mitigations</div>
+    <div class="tcfd-card-content list-card">
+      {% for r in section.metrics.risks %}
+      <div class="list-item">
+        <strong>{{ r.risk }}</strong><br>
+        <em>Mitigation:</em> {{ r.mitigation }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="tcfd-card">
+    <div class="tcfd-card-header">⚡ Actions</div>
+    <div class="tcfd-card-content list-card">
+      {% for a in section.metrics.actions %}
+      <div class="list-item">
+        <strong>{{ a.action }}</strong><br>
+        <em>Impact:</em> {{ a.impact }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Disclosures -->
+  {% if section.metrics.disclosures and section.metrics.disclosures|length > 0 %}
+  <div class="tcfd-card">
+    <div class="tcfd-card-header">📢 Disclosures</div>
+    <div class="tcfd-card-content list-card">
+      {% for d in section.metrics.disclosures %}
+      <div class="list-item">{{ d }}</div>
+      {% endfor %}
+    </div>
+  </div>
   {% endif %}
 </section>
