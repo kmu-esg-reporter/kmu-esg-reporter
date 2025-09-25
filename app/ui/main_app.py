@@ -76,7 +76,7 @@ class ESGReporterApp:
                 ui.button(icon='menu', on_click=lambda: drawer.toggle()) \
                     .props('flat round dense color=white')
                 ui.icon('eco', size='2rem').classes('text-green')
-                ui.label('ESG Reporter').classes('text-h5 font-weight-bold')
+                ui.label('ESG Mate').classes('text-h5 font-weight-bold')
             
             # with ui.row().classes('items-center gap-4'):
             #     # Company selector

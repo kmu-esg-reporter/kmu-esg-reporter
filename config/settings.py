@@ -58,7 +58,7 @@ class OpenAISettings(BaseSettings):
 class AppSettings(BaseSettings):
     """Main application settings."""
     
-    APP_NAME: str = "ESG Reporter"
+    APP_NAME: str = "ESG Mate"
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = Field(default=True, description="Debug mode")
     

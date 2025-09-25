@@ -318,7 +318,7 @@ class ChatbotPage(BasePage):
         # 1) 사용자 말풍선
         with results_area:
             with ui.row().classes("w-full justify-end mb-2"):
-                with ui.row().classes("max-w-[75%] items-start gap-2"):
+                with ui.row().classes("items-start gap-2"):
                     with ui.column().classes("items-end"):
                         ui.label("You").classes("font-weight-bold text-xs text-gray-500")
                         ui.label(text)\
