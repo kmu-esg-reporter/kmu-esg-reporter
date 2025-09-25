@@ -58,11 +58,11 @@ class ESGReportChatbot:
             model="gpt-4.1",
             openai_api_key=api_key,
             streaming=True,
-            temperature=0.1
+            temperature=0.7
         )
         self.llm_nostream = ChatOpenAI(
             model=self.llm.model_name, 
-            temperature=0.1, 
+            temperature=0.7, 
             streaming=False, 
             openai_api_key=api_key
         )
@@ -92,18 +92,48 @@ class ESGReportChatbot:
     def _setup_tools(self):
         """ESG 전용 도구들 설정"""
         
+        # @tool # 202509251600 임시백업
+        # def get_company_esg_data(cmp_num: str, category: str = None) -> str:
+        #     """회사의 ESG 데이터를 조회합니다."""
+        #     try:
+        #         # 새로운 데이터 처리기 사용
+        #         comprehensive_report = self.data_processor.generate_comprehensive_report(cmp_num)
+        #         if 'error' in comprehensive_report:
+        #             return comprehensive_report['error']
+                
+        #         return json.dumps(comprehensive_report['esg_metrics'], ensure_ascii=False, indent=2)
+        #     except Exception as e:
+        #         return f"데이터 조회 중 오류 발생: {str(e)}"
+        
         @tool
         def get_company_esg_data(cmp_num: str, category: str = None) -> str:
-            """회사의 ESG 데이터를 조회합니다."""
+            """회사의 실제 ESG 원본 데이터와 메트릭을 모두 제공"""
             try:
-                # 새로운 데이터 처리기 사용
-                comprehensive_report = self.data_processor.generate_comprehensive_report(cmp_num)
-                if 'error' in comprehensive_report:
-                    return comprehensive_report['error']
+                # 1. 원본 데이터 수집
+                emp_df = self.dataprocessor.get_employee_data()
+                env_df = self.dataprocessor.get_environmental_data() 
                 
-                return json.dumps(comprehensive_report['esg_metrics'], ensure_ascii=False, indent=2)
+                # 2. 메트릭 계산
+                comprehensive_report = self.dataprocessor.generate_comprehensive_report(cmp_num)
+                
+                # 3. 원본 + 메트릭 모두 반환
+                result = {
+                    "raw_data": {
+                        "employee_count": len(emp_df),
+                        "employee_sample": emp_df.head(5).to_dict('records') if not emp_df.empty else [],
+                        "environmental_years": env_df['year'].unique().tolist() if not env_df.empty else [],
+                        "environmental_sample": env_df.head(5).to_dict('records') if not env_df.empty else []
+                    },
+                    "calculated_metrics": comprehensive_report.get("esg_metrics", {}),
+                    "company_info": comprehensive_report.get("company_info", {})
+                }
+                return json.dumps(result, ensure_ascii=False, indent=2)
+
             except Exception as e:
                 return f"데이터 조회 중 오류 발생: {str(e)}"
+
+                
+
         
         @tool
         def analyze_esg_trends(cmp_num: str, category: str = "all") -> str:

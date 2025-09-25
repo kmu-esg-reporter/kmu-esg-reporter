@@ -5,6 +5,7 @@ from pathlib import Path
 from nicegui import ui
 from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
+from datetime import datetime
 import asyncio
 
 from .base_page import BasePage
@@ -296,6 +297,8 @@ class ChatbotPage(BasePage):
         v['left'].update(); v['right'].update()
 
     async def _send_free_text(self, chat_input):
+        ui.run_javascript("window.scrollTo(0, document.body.scrollHeight)")
+
         """우측 자유채팅 인풋에서 엔터/버튼으로 전송"""
         text = (chat_input.value or "").strip()
         if not text:
@@ -352,13 +355,28 @@ class ChatbotPage(BasePage):
         intent = s.get("intent")
         category = s.get("category", "all")
         period = s.get("period", "current_year")
+        
+        # 기간 변환 로직 추가
+        if period == "current_year":
+            period_label = datetime.now().year
+        elif period == "last_year":
+            period_label = datetime.now().year - 1
+        else:
+            period_label = period
+            
+        # # 카테고리 변환
+        # if category == "all":
+        #     category_label = "environmental, social, governance"
+        # else:
+        #     category_label = category
+
 
         query_templates = {
-            "data_query": f"Show me {category} ESG data for {period}",
-            "analysis_request": f"Analyze {category} ESG trends for {period}",
-            "report_generation": f"Generate a ESG report for {category} covering {period}",
-            "data_gaps": f"Identify data gaps in {category} ESG metrics for {period}",
-            "benchmarking": f"Compare our {category} ESG performance for {period}",
+            "data_query": f"Show me {category} ESG data for {period_label}",
+            "analysis_request": f"Analyze {category} ESG trends for {period_label}",
+            "report_generation": f"Generate a ESG report for {category} covering {period_label}",
+            "data_gaps": f"Identify data gaps in {category} ESG metrics for {period_label}",
+            "benchmarking": f"Compare our {category} ESG performance for {period_label}",
         }
 
         base_query = query_templates.get(intent, f"Help with {intent}")
