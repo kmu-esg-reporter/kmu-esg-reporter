@@ -14,7 +14,7 @@ class HRPage:
         # 현재 회사의 직원 데이터 조회
         employees = []
         current_company = None
-        available_branches = ['서울지사']  # 기본값
+        available_branches = ['서울지점']  # 기본값
         
         if db_session:
             try:
@@ -30,7 +30,7 @@ class HRPage:
                 if branch_records:
                     available_branches = [branch[0] for branch in branch_records if branch[0]]
                 if not available_branches:  # 빈 리스트인 경우 기본값 추가
-                    available_branches = ['서울지사']
+                    available_branches = ['서울지점']
                 
                 # 모든 직원 조회 (새 스키마에는 company_id가 없음)
                 db_employees = db_session.query(EmpInfo).all()
@@ -55,7 +55,7 @@ class HRPage:
                             gender_text = '여자'
                         
                         employees.append({
-                            '지점': emp.EMP_COMP or '서울지사',
+                            '지점': '서울지점' if emp.EMP_COMP == '6182618882' else emp.EMP_COMP or '서울지점',
                             '사번': str(emp.EMP_ID),
                             '이름': emp.EMP_NM,
                             '생년월일': birth_formatted,
@@ -74,10 +74,10 @@ class HRPage:
                 # 테이블이 존재하지 않거나 다른 DB 오류 시 샘플 데이터 사용
                 print(f"DB 오류로 샘플 데이터 사용: {str(e)}")
                 current_company = None
-                available_branches = ['서울지사']  # 기본값 설정
+                available_branches = ['서울지점']  # 기본값 설정
                 employees = [
                     {
-                        '지점': '서울지사',
+                        '지점': '서울지점',
                         '사번': '1001',
                         '이름': '김철수',
                         '생년월일': '1990-01-15',
@@ -255,7 +255,7 @@ class HRPage:
                     hire_parts = employee_data.get('입사일', '2025-01-01').split('-')
                     
                     # 기존 직원의 실제 지점 값을 사용 (수정 모드에서는 기존 값 유지)
-                    current_branch = employee_data.get('지점', '서울지사')
+                    current_branch = employee_data.get('지점', '서울지점')
                     
                     # 현재 지점이 available_branches에 없으면 추가
                     if current_branch not in available_branches:
@@ -282,12 +282,12 @@ class HRPage:
                     # 수정 모드에서는 사번 비활성화 (읽기 전용)
                     inputs['사번'].props('readonly disabled')
                 else:
-                    # 신규 등록 시 기본값 설정 - 서울지사 우선
-                    user_default_branch = "서울지사"
+                    # 신규 등록 시 기본값 설정 - 서울지점 우선
+                    user_default_branch = "서울지점"
                     if user_default_branch in available_branches:
                         default_branch = user_default_branch
                     else:
-                        default_branch = available_branches[0] if available_branches else '서울지사'
+                        default_branch = available_branches[0] if available_branches else '서울지점'
                     
                     inputs['지점'].set_value(default_branch)
                     inputs['사번'].set_value('')
@@ -317,7 +317,7 @@ class HRPage:
             # 지점 선택 (CmpInfo의 cmp_branch 값들을 사용)
             inputs['지점'] = ui.select(
                 options=available_branches, 
-                value=available_branches[0] if available_branches else '서울지사',
+                value=available_branches[0] if available_branches else '서울지점',
                 label='지점'
             ).props('outlined dense').classes('w-full mb-1')
             inputs['사번'] = field('사번', ui.input())
@@ -380,7 +380,7 @@ class HRPage:
                         return
                     
                     # 입력값 검증 및 수집
-                    workplace_value = inputs['지점'].value or '서울지사'  # 기본값 보장
+                    workplace_value = inputs['지점'].value or '서울지점'  # 기본값 보장
                     birth_date_str = f"{inputs['생년'].value}-{inputs['생월'].value}-{inputs['생일'].value}"
                     
                     try:
@@ -495,7 +495,7 @@ class HRPage:
                             for key, input_field in inputs.items():
                                 if hasattr(input_field, 'set_value'):
                                     if key == '지점':
-                                        input_field.set_value('서울지사')
+                                        input_field.set_value('서울지점')
                                     elif key in ['이사회여부', '재직여부']:
                                         input_field.set_value('N' if key == '이사회여부' else 'Y')
                                     elif key == '성별':
@@ -588,7 +588,7 @@ class HRPage:
                 try:
                     # 엑셀 양식 데이터 생성
                     template_data = {
-                        '지점': ['서울지사', '구미지사'],
+                        '지점': ['서울지점', '구미지사'],
                         '사번': ['1001', '1002'],
                         '이름': ['홍길동', '김철수'],
                         '생년월일': ['1990-01-15', '1985-05-20'],
@@ -675,7 +675,7 @@ class HRPage:
                                     continue
                                 
                                 # 지점 처리
-                                branch = str(row['지점']).strip() if pd.notna(row['지점']) else '서울지사'
+                                branch = str(row['지점']).strip() if pd.notna(row['지점']) else '서울지점'
                                 
                                 # 생년월일 처리
                                 birth_date = str(row['생년월일']).strip() if pd.notna(row['생년월일']) else ''
@@ -928,7 +928,7 @@ class HRPage:
                             gender_text = '여자'
                         
                         updated_employees.append({
-                            '지점': emp.EMP_COMP or '서울지사',
+                            '지점': emp.EMP_COMP or '서울지점',
                             '사번': str(emp.EMP_ID),
                             '이름': emp.EMP_NM,
                             '생년월일': birth_formatted,
