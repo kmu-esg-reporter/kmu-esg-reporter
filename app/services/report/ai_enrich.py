@@ -91,7 +91,7 @@ class ESGEnricher:
         if key in self._enrich_cache:
             return self._enrich_cache[key]
 
-        env_raw = esg_metrics.get("environment") or {}
+        env_raw = esg_metrics.get("environmental") or {}
         soc_raw = esg_metrics.get("social") or {}
         gov_raw = esg_metrics.get("governance") or {}
 
@@ -108,17 +108,28 @@ class ESGEnricher:
             self._with_timeout(gov_coro, 30, {}),
         )
 
-        # 항상 ai 키가 존재하도록 구성
+        # # 항상 ai 키가 존재하도록 구성 임시백업 202509262100
+        # enriched = {
+        #     "environment": {**env_raw, "ai": env_en if isinstance(env_en, dict) else {}},
+        #     "social":      {**soc_raw, "ai": soc_en if isinstance(soc_en, dict) else {}},
+        #     "governance":  {**gov_raw, "ai": gov_en if isinstance(gov_en, dict) else {}},
+        #     "summary": {
+        #         "E_summary": (env_en or {}).get("executive_summary"),
+        #         "S_summary": (soc_en or {}).get("executive_summary"),
+        #         "G_summary": (gov_en or {}).get("executive_summary"),
+        #     },
+        # }
         enriched = {
-            "environment": {**env_raw, "ai": env_en if isinstance(env_en, dict) else {}},
-            "social":      {**soc_raw, "ai": soc_en if isinstance(soc_en, dict) else {}},
-            "governance":  {**gov_raw, "ai": gov_en if isinstance(gov_en, dict) else {}},
+            "environmental": {"ai": env_en if isinstance(env_en, dict) else {}},  # environmental로 통일
+            "social": {"ai": soc_en if isinstance(soc_en, dict) else {}},
+            "governance": {"ai": gov_en if isinstance(gov_en, dict) else {}},
             "summary": {
-                "E_summary": (env_en or {}).get("executive_summary"),
-                "S_summary": (soc_en or {}).get("executive_summary"),
-                "G_summary": (gov_en or {}).get("executive_summary"),
-            },
+                "E_summary": (env_en or {}).get("executive_summary") or "환경 영역 데이터를 분석 중입니다.",
+                "S_summary": (soc_en or {}).get("executive_summary") or "사회 영역 데이터를 분석 중입니다.",
+                "G_summary": (gov_en or {}).get("executive_summary") or "지배구조 영역 데이터를 분석 중입니다."
+            }
         }
+        
 
         self._enrich_cache[key] = enriched
         return enriched

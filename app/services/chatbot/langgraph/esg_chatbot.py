@@ -24,6 +24,35 @@ from app.services.report.generator import build_report_html
 from app.services.report.renderer import html_to_pdf
 from config.settings import settings
 
+
+
+def normalize_enriched_keys(enriched: dict) -> dict:
+    """ESG 섹션 키를 표준화"""
+    if not enriched:
+        return {"environmental": {}, "social": {}, "governance": {}, "summary": {}}
+    
+    # environment -> environmental 키 변환
+    if "environment" in enriched and "environmental" not in enriched:
+        enriched["environmental"] = enriched.pop("environment")
+    
+    # 기본 구조 보장
+    for key in ["environmental", "social", "governance"]:
+        if key not in enriched:
+            enriched[key] = {}
+        if "ai" not in enriched[key]:
+            enriched[key]["ai"] = {}
+    
+    # summary 기본값 설정
+    if "summary" not in enriched or not enriched["summary"]:
+        enriched["summary"] = {
+            "E_summary": "환경 영역 분석 결과가 없습니다.",
+            "S_summary": "사회 영역 분석 결과가 없습니다.", 
+            "G_summary": "지배구조 영역 분석 결과가 없습니다."
+        }
+    
+    return enriched
+
+
 logger = logging.getLogger(__name__)
 
 class ESGAgentState(TypedDict):
@@ -176,7 +205,9 @@ class ESGReportChatbot:
                 
                  # LLM으로 텍스트/권고 보강 (구조화)
                 enricher = ESGEnricher(self.llm_nostream)  # self.llm은 __init__에서 ChatOpenAI(...)
-                enriched = await enricher._enrich_with_guard(esg_metrics)
+                enriched_raw  = await enricher._enrich_with_guard(esg_metrics)
+                enriched = normalize_enriched_keys(enriched_raw)
+
 
                 # 템플릿 입력은 우리가 만든 정규화 루틴이 처리
                 ## build_report_html에 전달할 때, 'ai' 블럭을 함께 넘겨 템플릿에서 사용
@@ -194,10 +225,14 @@ class ESGReportChatbot:
                     company_info=company_info,
                     period_label=period_label,
                     summary_metrics=enriched.get("summary", {}),     # 상단 Executive Summary 카드에 활용,
-                    env_metrics={**esg_metrics.get("environmental", {}), "ai": enriched.get("environmental", {}).get("ai", {})},
-                    soc_metrics={**esg_metrics.get("social", {}), "ai": enriched.get("social", {}).get("ai", {})},
-                    gov_metrics={**esg_metrics.get("governance", {}), "ai": enriched.get("governance", {}).get("ai", {})},
-                )
+                    env_metrics={**esg_metrics.get("environmental", {}), "ai": enriched["environmental"]["ai"]},
+                    soc_metrics={**esg_metrics.get("social", {}), "ai": enriched["social"]["ai"]},
+                    gov_metrics={**esg_metrics.get("governance", {}), "ai": enriched["governance"]["ai"]},
+
+                    # env_metrics={**esg_metrics.get("environmental", {}), "ai": enriched.get("environmental", {}).get("ai", {})},
+                    # soc_metrics={**esg_metrics.get("social", {}), "ai": enriched.get("social", {}).get("ai", {})},
+                    # gov_metrics={**esg_metrics.get("governance", {}), "ai": enriched.get("governance", {}).get("ai", {})},
+                )   
 
 
                 report_title = f"{company.cmp_nm} ESG 보고서 ({datetime.now().strftime('%Y-%m-%d')})"
