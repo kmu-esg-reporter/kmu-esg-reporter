@@ -100,12 +100,12 @@ class ESGEnricher:
         soc_coro = self.llm_soc.ainvoke({"raw": soc_raw})
         gov_coro = self.llm_gov.ainvoke({"raw": gov_raw})
 
-        # 섹션별 개별 타임아웃 및 부분 성공 허용 (예: 각 12초)
+        # 섹션별 개별 타임아웃 및 부분 성공 허용 (예: 각 30초)
         # 섹션이 실패해도 최소한 ai: {}는 보장
         env_en, soc_en, gov_en = await asyncio.gather(
-            self._with_timeout(env_coro, 12, {}),
-            self._with_timeout(soc_coro, 12, {}),
-            self._with_timeout(gov_coro, 12, {}),
+            self._with_timeout(env_coro, 30, {}),
+            self._with_timeout(soc_coro, 30, {}),
+            self._with_timeout(gov_coro, 30, {}),
         )
 
         # 항상 ai 키가 존재하도록 구성
