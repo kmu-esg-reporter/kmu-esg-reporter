@@ -1,4 +1,5 @@
 # app/ui/actions/report_download.py
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any
 from sqlalchemy.orm import Session
@@ -57,7 +58,12 @@ async def generate_esg_pdf(db: Session, cmp_num: str, options: Dict[str, Any]) -
     out_dir = Path("generated_reports")
     out_dir.mkdir(parents=True, exist_ok=True)
     company_name = _safe_name(company_info.get("cmp_nm", cmp_num or "company"))
-    out_path = out_dir / f"ESG_Report_{company_name}.pdf"
+    
+    # 현재 시간 
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")  # 예: 2025-09-26_16-30-45
 
+    # PDF 파일명에 시간 포함
+    out_path = out_dir / f"ESG_Report_{company_name}_{timestamp}.pdf"
+    
     # 4) PDF 렌더링
     return html_to_pdf(html, out_path)

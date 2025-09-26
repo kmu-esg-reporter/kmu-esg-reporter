@@ -645,7 +645,12 @@ ESG 분석과 보고서 생성을 위해 먼저 회사를 선택해 주세요.
             company = self.db.query(CmpInfo).filter_by(cmp_num=report.company_id).first()
             company_name = company.cmp_nm if company else "Unknown_Company"
             safe_title = f"ESG_Report_{company_name}".replace("/", "_")
-            pdf_path = os.path.join(out_dir, f"{safe_title}.pdf")
+            
+            # 타임스탬프 추가 
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            safe_title_with_ts = f"{safe_title}_{timestamp}"
+
+            pdf_path = os.path.join(out_dir, f"{safe_title_with_ts}.pdf")
 
             # ✅ WeasyPrint 대신 우리가 만든 PDF 변환 함수 사용
             html_to_pdf(report.content, pdf_path)
