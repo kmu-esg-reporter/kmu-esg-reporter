@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>{{ report.company.cmp_nm }} ESG Report</title>
+
+  <style>
+    @font-face {
+      font-family: "KRBody";
+      src: url("/app/static/fonts/KRBody-Regular.ttf") format("truetype");
+    }
+    @font-face {
+      font-family: "KRBodyBold";
+      src: url("/app/static/fonts/KRBody-Bold.ttf") format("truetype");
+      font-weight: bold;
+    }
+
+    html, body {
+      font-family: "KRBody";
+      margin: 0;
+      padding: 0;
+      color: #222;
+    }
+
+    /* === COVER === */
+    .report-cover {
+      height: 800px;
+      background: url("/app/static/images/cover_bg.png") no-repeat center center;
+      background-size: cover;
+      position: relative;
+    }
+
+    .cover-overlay {
+      background: rgba(255,255,255,0.8);
+      border-radius: 12px;
+      max-width: 70%;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .cover-overlay h1 {
+      font-size: 40px;
+      font-family: "KRBodyBold";
+      margin-bottom: 30px;
+      color: #1565c0;
+    }
+
+    .cover-overlay p.subtitle {
+      font-size: 20px;
+      margin-bottom: 24px;
+      color: #444;
+    }
+
+    .cover-meta {
+      display: inline-block;
+      padding: 12px 16px;  
+      text-align: right;
+      color: #1565c0;
+      font-size: 13px;
+      line-height: 1.1;    
+      background: rgba(255,255,255,0.9);
+      border-radius: 6px;  
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2); 
+    }
+
+    .cover-meta h2 {
+      margin: 0;           /* 🔥 여백 제거 */
+      font-size: 16px;
+      font-family: "KRBodyBold";
+    }
+
+    .cover-meta div {
+      margin: 0;           /* 🔥 여백 제거 */
+    }
+
+
+    /* === 공통 테이블 카드 === */
+    .page-break { page-break-before: always; }
+
+    .section-title {
+      border-left: 6px solid #1565c0;
+      background: #e3f2fd;
+      padding: 10px 14px;
+      margin: 24px 0 16px;
+      font-size: 20px;
+      color: #1565c0;
+    }
+
+    .table-card {
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      border: 1px solid #ddd;
+      margin: 16px 0;
+    }
+
+    .table-card table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .table-card thead {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+
+    .table-card thead th {
+      padding: 10px;
+      text-align: left;
+      font-weight: bold;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .table-card tbody td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+    }
+
+    .table-card tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    .summary-item {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;              /* 좌우 정렬 */
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .summary-label {
+      font-size: 14px;
+      color: #444;
+      font-weight: 600;
+    }
+
+    .summary-value {
+      font-size: 14px;  /* 라벨과 거의 동일 */
+      font-weight: 600;
+      color: #1565c0;
+    }
+
+    .summary-empty {
+      padding: 20px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      text-align: center;
+      color: #888;
+      font-size: 13px;
+    }
+
+
+
+    footer {
+      font-size: 10px;
+      color: #888;
+      text-align: center;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- COVER -->
+  <section class="report-cover">
+    <!-- 중앙 메인 콘텐츠 -->
+    <div style="text-align: center; padding-top: 100px;">
+      <div class="cover-overlay">
+        <div class="cover-icon">
+          <img src="/app/static/icons/logo.svg" alt="ESG Icon" width="300" height="300"/>
+        </div>
+        <h1>{{ report.company.cmp_nm }} ESG Report</h1>
+        <p class="subtitle">지속가능경영보고서 2030</p>
+      </div>
+    </div>
+    
+    <!-- 적당한 간격 -->
+    <br><br><br><br><br><br><br><br><br><br>
+    <br><br><br><br><br>
+    
+    <!-- 우측 정렬된 메타 정보 -->
+    <div style="text-align: right; padding-right: 40px;">
+      <div class="cover-meta">
+        <h2>{{ report.company.cmp_nm }}</h2>
+        <div>기간: {{ report.period_label }}</div>
+        <div>생성일: {{ report.generated_at }}</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="page-break"></div>
+
+  <!-- Executive Summary -->
+  <section>
+    <div class="tcfd-card">
+      <div class="tcfd-card-header">📊 Executive Summary</div>
+      <div class="tcfd-card-content">
+        {% if report.summary and report.summary|length > 0 %}
+        <table style="width: 100%; border: 1px solid #ddd; border-collapse: collapse;">
+          {% for k, v in report.summary.items() %}
+          <tr style="border: none;">
+            <td style="
+              padding: 6px 15px; 
+              text-align: left; 
+              font-size: 12px; 
+              font-weight: bold; 
+              color: #666666;
+              border: none;
+              border-bottom: 1px solid #eee;
+              line-height: 1.2;
+            ">{{ k }}</td>
+            <td style="
+              padding: 6px 15px; 
+              text-align: right; 
+              font-size: 14px; 
+              font-weight: bold; 
+              color: #333;
+              border: none;
+              border-bottom: 1px solid #eee;
+              line-height: 1.2;
+            ">{{ v }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+        {% else %}
+        <div style="
+          padding: 20px;
+          background: #f1f5f9;
+          border-radius: 8px;
+          text-align: center;
+          color: #888;
+          font-size: 13px;
+        ">
+          요약 지표를 표시할 데이터가 없습니다.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+
+
+
+  <div class="page-break"></div>
+  {{ env_html|safe }}
+  <div class="page-break"></div>
+  {{ soc_html|safe }}
+  <div class="page-break"></div>
+  {{ gov_html|safe }}
+
+  <footer>© {{ report.company.cmp_nm }} — Confidential</footer>
+</body>
+</html>
